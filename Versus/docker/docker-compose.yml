@@ -1,0 +1,77 @@
+version: "3.1"
+
+services:
+  # mariadb
+  mariadb:
+    container_name: mariadb
+    image: mariadb:latest
+    environment:
+      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: docker
+      MYSQL_DATABASE: DOCKER
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+    volumes:
+      - mariadb_data:/var/lib/mariadb
+      - ./sql/:/docker-entrypoint-initdb.d/
+    networks:
+      - mariadb
+
+  #phpmyadmin
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - 8081:80
+    depends_on:
+      - mariadb
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: docker
+    links:
+      - mariadb
+    networks:
+      - mariadb
+      - php
+    
+    
+
+  #php
+  php:
+    container_name: php-web
+    build: 
+      context: .
+      dockerfile: php/Dockerfile
+    volumes:
+      - ./:/var/www/html
+      - mariadb_data:/var/lib/mariadb
+    ports:
+      - 8000:8000
+    depends_on:
+      - mariadb
+    networks:
+      - php
+      - mariadb
+
+  #react
+  #react:
+   # image: node:alpine
+    #stdin_open: true
+    #build:
+     # context: .
+      #dockerfile: react/Dockerfile
+    #ports:
+     # - 3000:3000
+    #volumes:
+     # - /app/node_modules
+     # - ./:/app
+
+volumes:
+  mariadb_data:
+
+networks:
+  mariadb:
+  php:
